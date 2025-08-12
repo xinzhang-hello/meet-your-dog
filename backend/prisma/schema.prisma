@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  createdAt DateTime @default(now())
+  
+  pets        Pet[]
+  roomMembers RoomMember[]
+  
+  @@map("users")
+}
+
+model Room {
+  id             String   @id @default(uuid())
+  name           String
+  maxPlayers     Int      @default(10)
+  currentPlayers Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  
+  pets        Pet[]
+  roomMembers RoomMember[]
+  
+  @@map("rooms")
+}
+
+model Pet {
+  id          String   @id @default(uuid())
+  userId      String
+  roomId      String
+  drawingData Json     // Fabric.js canvas data
+  imageData   String?  // Base64 PNG image data
+  position    Json     // {x, y} coordinates
+  type        String   // "dog" or "cat"
+  createdAt   DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  
+  @@map("pets")
+}
+
+model RoomMember {
+  id       String   @id @default(uuid())
+  roomId   String
+  userId   String
+  joinedAt DateTime @default(now())
+  isActive Boolean  @default(true)
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  
+  @@unique([roomId, userId])
+  @@map("room_members")
+}

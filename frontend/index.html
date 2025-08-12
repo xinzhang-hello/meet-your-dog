@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meet Your Dog</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow: hidden;
+        }
+        
+        #app {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 8px;
+            width: 300px;
+            text-align: center;
+        }
+        
+        .input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .title {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 32px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .drawing-container {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin: 20px;
+        }
+        
+        .game-ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .user-info {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .room-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 400px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .room-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+        
+        .room-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .room-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        
+        .room-players {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="screen">
+            <h1 class="title">Meet Your Dog</h1>
+            <input 
+                type="text" 
+                id="usernameInput" 
+                placeholder="Enter your username"
+                class="input"
+                maxlength="20"
+            >
+            <button id="loginBtn" class="btn">Join Game</button>
+        </div>
+
+        <!-- Room Selection Screen -->
+        <div id="roomScreen" class="screen hidden">
+            <h2 class="title" style="font-size: 32px;">Choose a Room</h2>
+            <div id="roomList" class="room-list"></div>
+            <div style="display: flex; gap: 16px; margin-top: 20px;">
+                <input 
+                    type="text" 
+                    id="roomNameInput" 
+                    placeholder="New room name"
+                    class="input"
+                    style="width: 200px;"
+                >
+                <button id="createRoomBtn" class="btn">Create Room</button>
+            </div>
+        </div>
+
+        <!-- Drawing Screen -->
+        <div id="drawingScreen" class="screen hidden">
+            <h2 class="title" style="font-size: 32px; color: #333;">Draw Your Pet</h2>
+            <div class="drawing-container">
+                <div style="margin-bottom: 16px; text-align: center;">
+                    <button id="dogBtn" class="btn" style="color: #333; background: #ff6b6b;">Dog</button>
+                    <button id="catBtn" class="btn" style="color: #333; background: #4ecdc4;">Cat</button>
+                    <button id="clearBtn" class="btn" style="color: #333; background: #f7f7f7;">Clear</button>
+                </div>
+                <canvas id="drawingCanvas" width="600" height="400"></canvas>
+                <div style="margin-top: 16px; text-align: center;">
+                    <button id="finishDrawingBtn" class="btn" style="color: #333; background: #45b7d1;">Done! Enter World</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen hidden">
+            <div class="game-ui">
+                <div id="userInfo" class="user-info"></div>
+                <button id="exitGameBtn" class="btn" style="font-size: 12px; padding: 6px 12px;">Exit</button>
+            </div>
+            <div id="gameContainer"></div>
+        </div>
+    </div>
+
+    <script src="main.ts" type="module"></script>
+</body>
+</html>

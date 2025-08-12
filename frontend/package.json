@@ -1,0 +1,24 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "Meet Your Dog - Frontend",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "fabric": "^5.3.0",
+    "phaser": "^3.80.0",
+    "socket.io-client": "^4.7.5",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.1",
+    "@vitejs/plugin-react": "^4.2.0",
+    "typescript": "^5.9.2",
+    "vite": "^5.0.0"
+  },
+  "type": "module"
+}
