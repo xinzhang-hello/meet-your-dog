@@ -144,9 +144,6 @@ Thumbs.db
 # Prisma
 prisma/migrations/
 
-# Docker
-Dockerfile*
-docker-compose*.yml
 .dockerignore
 
 # Temporary files
