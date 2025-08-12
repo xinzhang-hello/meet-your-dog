@@ -38,9 +38,6 @@ A multiplayer web game where players can draw their pets and watch them interact
 git clone <your-repo-url>
 cd meet-your-dog
 
-# Copy environment variables
-cp .env.example .env
-
 # Edit .env file with secure passwords:
 # - Set POSTGRES_PASSWORD to a secure password
 # - Set JWT_SECRET to a secure random string (min 32 characters)
@@ -72,7 +69,7 @@ cp package-clean.json package.json
 npm install
 
 # Set up environment
-cp .env.example .env
+cp .env .env
 # Edit .env with your database credentials and secure secrets
 
 # Set up database

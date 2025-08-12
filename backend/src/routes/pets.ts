@@ -3,6 +3,7 @@ import Joi from 'joi';
 import prisma from '../utils/database';
 import { authenticate } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types';
+import { logError } from '../utils/logger';
 
 const router = express.Router();
 
@@ -52,7 +53,7 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
 
     res.json(pet);
   } catch (error) {
-    console.error('Create pet error:', error);
+    logError('Create pet error', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -89,7 +90,7 @@ router.patch('/:id/position', authenticate, async (req: AuthenticatedRequest, re
 
     res.json(updatedPet);
   } catch (error) {
-    console.error('Update pet position error:', error);
+    logError('Update pet position error', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -107,7 +108,7 @@ router.get('/room/:roomId', async (req: Request, res: Response) => {
 
     res.json(pets);
   } catch (error) {
-    console.error('Get pets error:', error);
+    logError('Get pets error', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

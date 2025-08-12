@@ -28,7 +28,8 @@ export class GameManager {
 
     init() {
         this.setupEventListeners();
-        this.showScreen('login');
+        this.setupRouting();
+        this.handleRoute();
         
         // Subscribe to game store updates
         gameStore.subscribe((state) => {
@@ -59,6 +60,113 @@ export class GameManager {
 
         // Game screen
         document.getElementById('exitGameBtn').addEventListener('click', this.exitGame.bind(this));
+    }
+
+    setupRouting() {
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', () => {
+            this.handleRoute();
+        });
+    }
+
+    handleRoute() {
+        const path = window.location.pathname;
+        const urlParams = new URLSearchParams(window.location.search);
+        const pathParts = path.split('/').filter(part => part);
+        
+        if (path === '/room') {
+            // Show room list
+            this.showScreen('room');
+        } else if (pathParts[0] === 'room' && pathParts[1]) {
+            const roomId = pathParts[1];
+            const subPath = pathParts[2];
+            
+            if (subPath === 'draw') {
+                // Direct link to drawing screen
+                this.handleRoomRoute(roomId, 'drawing');
+            } else if (subPath === 'game') {
+                // Direct link to game screen
+                this.handleRoomRoute(roomId, 'game');
+            } else {
+                // Just room ID, join the room
+                this.handleRoomRoute(roomId);
+            }
+        } else if (path === '/') {
+            this.showScreen('login');
+        } else {
+            // Default to login
+            this.showScreen('login');
+        }
+    }
+
+    async handleRoomRoute(roomId: string, targetScreen?: string) {
+        const user = gameStore.getState().user;
+        const token = gameStore.getState().token;
+        
+        if (!user || !token) {
+            // User not logged in, redirect to login but preserve room ID
+            this.updateURL('/', { roomId });
+            this.showScreen('login');
+            return;
+        }
+        
+        try {
+            // Check if room exists
+            const rooms = await this.apiService.getRooms();
+            const room = rooms.find(r => r.id === roomId);
+            
+            if (!room) {
+                alert('Room not found');
+                this.updateURL('/room');
+                this.showScreen('room');
+                return;
+            }
+            
+            if (room.currentPlayers >= room.maxPlayers) {
+                alert('Room is full');
+                this.updateURL('/room');
+                this.showScreen('room');
+                return;
+            }
+            
+            // Set room in store and connect socket
+            gameStore.getState().setCurrentRoom(roomId);
+            this.socketService.joinRoom(roomId);
+            
+            // Navigate to appropriate screen
+            if (targetScreen === 'drawing') {
+                this.showScreen('drawing');
+            } else if (targetScreen === 'game') {
+                this.showScreen('game');
+            } else {
+                // Default to drawing screen when joining a room
+                this.updateURL(`/room/${roomId}/draw`);
+                this.showScreen('drawing');
+            }
+        } catch (error) {
+            console.error('Failed to handle room route:', error);
+            this.updateURL('/room');
+            this.showScreen('room');
+        }
+    }
+
+    updateURL(path: string, params?: Record<string, string>) {
+        const url = new URL(window.location.href);
+        url.pathname = path;
+        
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value) {
+                    url.searchParams.set(key, value);
+                } else {
+                    url.searchParams.delete(key);
+                }
+            });
+        } else {
+            url.search = '';
+        }
+        
+        window.history.pushState({}, '', url.toString());
     }
 
     showScreen(screenName: string) {
@@ -100,7 +208,19 @@ export class GameManager {
             gameStore.getState().setToken(response.token);
             
             this.socketService.connect(response.token);
-            this.showScreen('room');
+            
+            // Check if there's a room ID in URL params
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomId = urlParams.get('roomId');
+            
+            if (roomId) {
+                // Remove roomId from URL params and redirect to room
+                this.updateURL(`/room/${roomId}`);
+                this.handleRoomRoute(roomId);
+            } else {
+                this.updateURL('/room');
+                this.showScreen('room');
+            }
         } catch (error) {
             console.error('Login failed:', error);
             alert('Login failed. Please try again.');
@@ -134,7 +254,10 @@ export class GameManager {
             `;
             
             if (room.currentPlayers < room.maxPlayers) {
-                roomElement.addEventListener('click', () => this.joinRoom(room.id));
+                roomElement.addEventListener('click', () => {
+                    this.updateURL(`/room/${room.id}`);
+                    this.joinRoom(room.id);
+                });
             } else {
                 roomElement.style.opacity = '0.5';
                 roomElement.style.cursor = 'not-allowed';
@@ -155,6 +278,7 @@ export class GameManager {
 
         try {
             const room = await this.apiService.createRoom(roomName);
+            this.updateURL(`/room/${room.id}`);
             this.joinRoom(room.id);
         } catch (error) {
             console.error('Failed to create room:', error);
@@ -166,6 +290,7 @@ export class GameManager {
         try {
             gameStore.getState().setCurrentRoom(roomId);
             this.socketService.joinRoom(roomId);
+            this.updateURL(`/room/${roomId}/draw`);
             this.showScreen('drawing');
         } catch (error) {
             console.error('Failed to join room:', error);
@@ -179,8 +304,100 @@ export class GameManager {
         }
         
         const canvas = document.getElementById('drawingCanvas') as HTMLCanvasElement;
-        this.drawingCanvas = new DrawingCanvas(canvas);
+        this.drawingCanvas = new DrawingCanvas(canvas, (bondLevel: number) => {
+            this.updateBondDisplay(bondLevel);
+        });
+        
+        this.setupDrawingUI();
         this.selectPetType('dog'); // Default selection
+        
+        // Add a slight delay to ensure proper positioning after DOM updates
+        setTimeout(() => {
+            if (this.drawingCanvas) {
+                this.drawingCanvas.recalculatePosition();
+            }
+        }, 100);
+        
+        // Add window resize listener to recalculate canvas offset
+        window.addEventListener('resize', () => {
+            if (this.drawingCanvas) {
+                this.drawingCanvas.recalculatePosition();
+            }
+        });
+    }
+
+    updateBondDisplay(bondLevel: number) {
+        const bondBar = document.getElementById('bondBar');
+        const bondText = document.getElementById('bondText');
+        
+        if (bondBar && bondText) {
+            const displayLevel = Math.round(bondLevel * 10) / 10; // Round to 1 decimal place
+            bondBar.style.width = `${bondLevel}%`;
+            bondText.textContent = `Bond: ${displayLevel}%`;
+            
+            // Change color based on bond level
+            if (bondLevel < 30) {
+                bondBar.style.background = '#ff6b6b';
+            } else if (bondLevel < 70) {
+                bondBar.style.background = '#ffa726';
+            } else {
+                bondBar.style.background = '#66bb6a';
+            }
+        }
+    }
+
+    setupDrawingUI() {
+        if (!this.drawingCanvas) return;
+
+        const colorsContainer = document.getElementById('colorPalette');
+        const sizesContainer = document.getElementById('brushSizes');
+
+        // Clear existing UI
+        if (colorsContainer) colorsContainer.innerHTML = '';
+        if (sizesContainer) sizesContainer.innerHTML = '';
+
+        // Add color palette
+        if (colorsContainer) {
+            this.drawingCanvas.getColorPalette().forEach(color => {
+                const colorBtn = document.createElement('button');
+                colorBtn.className = 'color-btn';
+                colorBtn.style.backgroundColor = color;
+                colorBtn.style.border = color === '#FFFFFF' ? '2px solid #ccc' : '2px solid transparent';
+                colorBtn.addEventListener('click', () => {
+                    this.drawingCanvas?.setBrushColor(color);
+                    // Update active state
+                    colorsContainer.querySelectorAll('.color-btn').forEach(btn => {
+                        btn.style.border = btn === colorBtn 
+                            ? '2px solid #333' 
+                            : (btn.style.backgroundColor === 'rgb(255, 255, 255)' ? '2px solid #ccc' : '2px solid transparent');
+                    });
+                });
+                colorsContainer.appendChild(colorBtn);
+            });
+        }
+
+        // Add brush sizes
+        if (sizesContainer) {
+            this.drawingCanvas.getBrushSizes().forEach(size => {
+                const sizeBtn = document.createElement('button');
+                sizeBtn.className = 'size-btn';
+                sizeBtn.textContent = `${size}px`;
+                sizeBtn.addEventListener('click', () => {
+                    this.drawingCanvas?.setBrushWidth(size);
+                    // Update active state
+                    sizesContainer.querySelectorAll('.size-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    sizeBtn.classList.add('active');
+                });
+                sizesContainer.appendChild(sizeBtn);
+            });
+            
+            // Set default size active
+            if (sizesContainer.children[1]) {
+                sizesContainer.children[1].classList.add('active');
+            }
+        }
     }
 
     selectPetType(type: 'dog' | 'cat') {
@@ -200,8 +417,9 @@ export class GameManager {
         try {
             const drawingData = this.drawingCanvas.getDrawingData();
             const imageData = this.drawingCanvas.getDrawingAsImage();
+            const currentRoom = gameStore.getState().currentRoom;
             const petData = {
-                roomId: gameStore.getState().currentRoom,
+                roomId: currentRoom,
                 drawingData: drawingData,
                 imageData: imageData, // Add the image data
                 type: this.selectedPetType,
@@ -209,6 +427,7 @@ export class GameManager {
             };
 
             this.socketService.createPet(petData);
+            this.updateURL(`/room/${currentRoom}/game`);
             this.showScreen('game');
         } catch (error) {
             console.error('Failed to create pet:', error);
@@ -239,6 +458,7 @@ export class GameManager {
         }
         
         gameStore.getState().setCurrentRoom(null);
+        this.updateURL('/room');
         this.showScreen('room');
         this.loadRooms();
     }

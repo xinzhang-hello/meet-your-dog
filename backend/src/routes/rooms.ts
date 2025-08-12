@@ -3,6 +3,7 @@ import Joi from 'joi';
 import prisma from '../utils/database';
 import { authenticate } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types';
+import { logError } from '../utils/logger';
 
 const router = express.Router();
 
@@ -34,7 +35,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     res.json(roomsWithPlayerCount);
   } catch (error) {
-    console.error('Get rooms error:', error);
+    logError('Get rooms error', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -56,7 +57,7 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
 
     res.json(room);
   } catch (error) {
-    console.error('Create room error:', error);
+    logError('Create room error', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -83,7 +84,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     res.json(room);
   } catch (error) {
-    console.error('Get room error:', error);
+    logError('Get room error', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
