@@ -1,5 +1,8 @@
 // Simple state management without external dependencies
 class GameStore {
+    private state: any;
+    private listeners: Array<(state: any) => void>;
+
     constructor() {
         this.state = {
             user: null,

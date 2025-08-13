@@ -367,9 +367,10 @@ export class GameManager {
                     this.drawingCanvas?.setBrushColor(color);
                     // Update active state
                     colorsContainer.querySelectorAll('.color-btn').forEach(btn => {
-                        btn.style.border = btn === colorBtn 
+                        const btnElement = btn as HTMLElement;
+                        btnElement.style.border = btn === colorBtn 
                             ? '2px solid #333' 
-                            : (btn.style.backgroundColor === 'rgb(255, 255, 255)' ? '2px solid #ccc' : '2px solid transparent');
+                            : (btnElement.style.backgroundColor === 'rgb(255, 255, 255)' ? '2px solid #ccc' : '2px solid transparent');
                     });
                 });
                 colorsContainer.appendChild(colorBtn);

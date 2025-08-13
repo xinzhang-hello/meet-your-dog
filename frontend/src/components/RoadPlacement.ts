@@ -7,50 +7,15 @@ export class RoadPlacement {
 
     generateRoadNetwork(width: number, height: number): RoadSegment[] {
         this.roadNetwork = [
-            // Main horizontal arterial roads (avoiding major objects)
-            { x1: 0, y1: height * 0.38, x2: width, y2: height * 0.38, width: 35 },
-            { x1: 0, y1: height * 0.55, x2: width, y2: height * 0.55, width: 32 },
-            { x1: 0, y1: height * 0.78, x2: width, y2: height * 0.78, width: 28 },
+            // Main horizontal arterial roads
+            { x1: 0, y1: height * 0.38, x2: width, y2: height * 0.38, width: 18 },
+            { x1: 0, y1: height * 0.55, x2: width, y2: height * 0.55, width: 16 },
+            { x1: 0, y1: height * 0.78, x2: width, y2: height * 0.78, width: 14 },
             
             // Main vertical roads
-            { x1: width * 0.18, y1: 0, x2: width * 0.18, y2: height, width: 30 },
-            { x1: width * 0.48, y1: 0, x2: width * 0.48, y2: height, width: 32 },
-            { x1: width * 0.78, y1: 0, x2: width * 0.78, y2: height, width: 28 },
-            
-            // Curved road around northern park area
-            { x1: width * 0.38, y1: height * 0.12, x2: width * 0.45, y2: height * 0.18, width: 24 },
-            { x1: width * 0.45, y1: height * 0.18, x2: width * 0.52, y2: height * 0.15, width: 24 },
-            { x1: width * 0.52, y1: height * 0.15, x2: width * 0.6, y2: height * 0.12, width: 24 },
-            
-            // Winding residential road around western buildings
-            { x1: width * 0.08, y1: height * 0.3, x2: width * 0.12, y2: height * 0.35, width: 22 },
-            { x1: width * 0.12, y1: height * 0.35, x2: width * 0.2, y2: height * 0.4, width: 22 },
-            { x1: width * 0.2, y1: height * 0.4, x2: width * 0.28, y2: height * 0.45, width: 22 },
-            
-            // Road curving around swimming pool
-            { x1: width * 0.52, y1: height * 0.32, x2: width * 0.58, y2: height * 0.35, width: 20 },
-            { x1: width * 0.72, y1: height * 0.35, x2: width * 0.78, y2: height * 0.32, width: 20 },
-            { x1: width * 0.58, y1: height * 0.48, x2: width * 0.65, y2: height * 0.52, width: 20 },
-            { x1: width * 0.65, y1: height * 0.52, x2: width * 0.72, y2: height * 0.48, width: 20 },
-            
-            // Eastern residential streets
-            { x1: width * 0.68, y1: height * 0.15, x2: width * 0.75, y2: height * 0.2, width: 20 },
-            { x1: width * 0.75, y1: height * 0.2, x2: width * 0.8, y2: height * 0.3, width: 20 },
-            { x1: width * 0.8, y1: height * 0.3, x2: width * 0.85, y2: height * 0.35, width: 20 },
-            
-            // Southern winding roads
-            { x1: width * 0.1, y1: height * 0.7, x2: width * 0.2, y2: height * 0.72, width: 22 },
-            { x1: width * 0.25, y1: height * 0.68, x2: width * 0.35, y2: height * 0.7, width: 22 },
-            { x1: width * 0.45, y1: height * 0.68, x2: width * 0.55, y2: height * 0.72, width: 22 },
-            
-            // Curved access roads to buildings
-            { x1: width * 0.22, y1: height * 0.28, x2: width * 0.28, y2: height * 0.32, width: 18 },
-            { x1: width * 0.32, y1: height * 0.25, x2: width * 0.38, y2: height * 0.28, width: 18 },
-            
-            // Small connecting streets
-            { x1: width * 0.42, y1: height * 0.3, x2: width * 0.48, y2: height * 0.35, width: 16 },
-            { x1: width * 0.6, y1: height * 0.6, x2: width * 0.68, y2: height * 0.65, width: 16 },
-            { x1: width * 0.15, y1: height * 0.5, x2: width * 0.22, y2: height * 0.55, width: 16 }
+            { x1: width * 0.18, y1: 0, x2: width * 0.18, y2: height, width: 15 },
+            { x1: width * 0.48, y1: 0, x2: width * 0.48, y2: height, width: 16 },
+            { x1: width * 0.78, y1: 0, x2: width * 0.78, y2: height, width: 14 }
         ];
 
         return this.roadNetwork;
@@ -60,17 +25,14 @@ export class RoadPlacement {
         this.roadPoints = [];
         
         this.roadNetwork.forEach((road, index) => {
-            // Draw road
+            // Draw road (realistic asphalt color)
             const roadGraphics = scene.add.graphics();
-            roadGraphics.lineStyle(road.width, 0x404040, 1);
+            roadGraphics.lineStyle(road.width, 0x2F2F2F, 1);
             roadGraphics.beginPath();
             roadGraphics.moveTo(road.x1, road.y1);
             roadGraphics.lineTo(road.x2, road.y2);
             roadGraphics.strokePath();
             roadGraphics.setDepth(5);
-            
-            // Add yellow center line
-            this.addCenterLine(scene, road);
             
             // Generate walkable points along the road
             this.generateWalkablePoints(road, width, height);
@@ -160,31 +122,7 @@ export class RoadPlacement {
     }
 
     createSidewalks(scene: Phaser.Scene, width: number, height: number): void {
-        this.roadNetwork.forEach(road => {
-            const sidewalkWidth = 15;
-            const sidewalkColor = 0xC0C0C0;
-            
-            const roadLength = Math.sqrt(
-                Math.pow(road.x2 - road.x1, 2) + Math.pow(road.y2 - road.y1, 2)
-            );
-            const perpX = -(road.y2 - road.y1) / roadLength * (road.width / 2 + sidewalkWidth / 2);
-            const perpY = (road.x2 - road.x1) / roadLength * (road.width / 2 + sidewalkWidth / 2);
-            
-            [-1, 1].forEach(side => {
-                const sidewalkGraphics = scene.add.graphics();
-                sidewalkGraphics.lineStyle(sidewalkWidth, sidewalkColor, 1);
-                sidewalkGraphics.beginPath();
-                sidewalkGraphics.moveTo(
-                    road.x1 + perpX * side, 
-                    road.y1 + perpY * side
-                );
-                sidewalkGraphics.lineTo(
-                    road.x2 + perpX * side, 
-                    road.y2 + perpY * side
-                );
-                sidewalkGraphics.strokePath();
-            });
-        });
+        // No sidewalks - roads are black only
     }
 
     addParkWalkableAreas(width: number, height: number): void {

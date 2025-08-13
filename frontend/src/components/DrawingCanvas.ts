@@ -1,6 +1,7 @@
 import { fabric } from 'fabric';
 
 export class DrawingCanvas {
+    private canvas: fabric.Canvas;
     private bondLevel: number = 0;
     private strokeCount: number = 0;
     private onBondUpdate?: (bondLevel: number) => void;
